@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <button id="globalOverviewBtn" class="global-overview-btn" title="Global Overview">📊</button>
+        <div id="map" class="map-container"></div>
+    </div>
+
+    <!-- Global overview modal -->
+    <div id="globalOverviewModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Global Overview</h2>
+            <p>
+                <strong>Total active countries:</strong>
+                <span id="totalCountries">0</span>
+                <button id="toggleCountryList">Show list</button>
+            </p>
+            <ul id="countryList" style="display:none;"></ul>
+            <p><strong>Total churches:</strong> <span id="totalChurches">0</span></p>
+            <p><strong>Total groups:</strong> <span id="totalGroups">0</span></p>
+            <p><strong>Total staff:</strong> <span id="totalStaff">0</span></p>
+            <p><strong>Total volunteers:</strong> <span id="totalVolunteers">0</span></p>
+        </div>
+    </div>
+
+    <!-- Sliding sidebar for country / church details -->
+    <div id="sidebar" class="sidebar">
+        <button id="closeSidebar" title="Close">&times;</button>
+        <div id="sidebarContent"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
