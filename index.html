@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DOOR International 2x2 Map Plugin - Global Ministry Visualization">
+    <meta name="author" content="Rylan Vannaman & Evan Simons">
+    <title>DOOR International - Global Ministry Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin="anonymous" />
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+</head>
+<body>
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MAIN CONTAINER
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="container">
+        
+        <!-- ─── Floating Control Buttons ─────────────────────────────────────── -->
+        <button id="globalOverviewBtn" class="control-btn overview-btn" title="View Global Statistics">
+            <span class="btn-icon">🌍</span>
+            <span class="btn-text">Global Overview</span>
+        </button>
+        
+        <div class="security-wrap">
+            <button id="obscurePinsBtn" class="control-btn security-btn" title="10/40 Window Security Options">
+                <span class="btn-icon">🔓</span>
+                <span class="btn-text">Security: Off</span>
+            </button>
+            <div id="securityPopup" class="security-popup">
+                <div class="popup-header">
+                    <h4>🔒 10/40 Window Pin Security</h4>
+                    <p>Applies only to church pins inside the 10/40 Window (10°–40°N, 10°W–145°E)</p>
+                </div>
+                <button class="sec-option" data-mode="obfuscate">
+                    <span class="sec-icon">📍</span>
+                    <div class="sec-text">
+                        <strong>Obfuscate Locations</strong>
+                        <small>Shift pins ~15 km from their real position</small>
+                    </div>
+                </button>
+                <button class="sec-option" data-mode="hidden">
+                    <span class="sec-icon">👁️‍🗨️</span>
+                    <div class="sec-text">
+                        <strong>Hide Pins</strong>
+                        <small>Remove 10/40 church pins from the map</small>
+                    </div>
+                </button>
+                <p class="sec-reset">Click the active option again to reset to normal.</p>
+            </div>
+        </div>
+        
+        <button id="addDataBtn" class="control-btn data-btn" title="Data Management Dashboard">
+            <span class="btn-icon">➕</span>
+            <span class="btn-text">Add Data</span>
+        </button>
+
+        <!-- ─── Map Container ────────────────────────────────────────────────── -->
+        <div id="map" class="map-container"></div>
+
+        <!-- ─── Map Legend ───────────────────────────────────────────────────── -->
+        <div class="map-legend">
+            <h4>📊 Country Status</h4>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #4caf50"></span>
+                <span>L1 - Established</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #8bc34a"></span>
+                <span>L2 - Growing</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #ffeb3b"></span>
+                <span>L3 - Developing</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #ff9800"></span>
+                <span>L4 - Emerging</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #9e9e9e"></span>
+                <span>Inactive</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #f44336"></span>
+                <span>Cancelled</span>
+            </div>
+        </div>
+
+        <!-- ─── Branding ─────────────────────────────────────────────────────── -->
+        <div class="branding">
+            <span class="brand-text">DOOR International</span>
+            <span class="brand-subtitle">2x2 Map Plugin System</span>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         GLOBAL OVERVIEW MODAL
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="globalOverviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🌍 Global Ministry Overview</h2>
+                <button class="modal-close" id="closeOverview" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Statistics Grid -->
+                <div class="stat-grid-large">
+                    <div class="stat-card">
+                        <div class="stat-icon">🌍</div>
+                        <div class="stat-value" id="totalCountries">0</div>
+                        <div class="stat-label">Active Countries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⛪</div>
+                        <div class="stat-value" id="totalChurches">0</div>
+                        <div class="stat-label">Total Churches</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value" id="totalGroups">0</div>
+                        <div class="stat-label">Total Groups</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👔</div>
+                        <div class="stat-value" id="totalStaff">0</div>
+                        <div class="stat-label">Total Staff</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🙋</div>
+                        <div class="stat-value" id="totalVolunteers">0</div>
+                        <div class="stat-label">Total Volunteers</div>
+                    </div>
+                </div>
+                
+                <!-- Country List Toggle -->
+                <button id="toggleCountryList" class="toggle-list-btn">
+                    📋 Show Country List
+                </button>
+                <ul id="countryList" class="country-list"></ul>
+                
+                <!-- Export Options -->
+                <div class="modal-actions">
+                    <button class="action-btn" id="exportGlobalCSV" title="Export global statistics">
+                        📥 Export to CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         DATA MANAGEMENT DASHBOARD
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="formsPage" class="forms-page">
+        <div class="forms-header">
+            <div class="forms-title">
+                <h2>📊 Data Management Dashboard</h2>
+                <p class="forms-subtitle">Add or update ministry data (Session only - data resets on refresh)</p>
+            </div>
+            <button id="closeFormsPage" class="close-forms-btn">
+                ← Back to Map
+            </button>
+        </div>
+        
+        <!-- Form Selection Cards -->
+        <div class="form-selection-cards">
+            <div class="form-card active" data-target="addCountrySection">
+                <div class="card-icon">🌍</div>
+                <h3>Add Country</h3>
+                <p>Register a new ministry country</p>
+            </div>
+            <div class="form-card" data-target="addChurchSection">
+                <div class="card-icon">⛪</div>
+                <h3>Add Church</h3>
+                <p>Add a church location</p>
+            </div>
+            <div class="form-card" data-target="addStaffSection">
+                <div class="card-icon">👔</div>
+                <h3>Add Staff</h3>
+                <p>Register staff member</p>
+            </div>
+            <div class="form-card" data-target="updateLevelSection">
+                <div class="card-icon">🎨</div>
+                <h3>Update Status</h3>
+                <p>Change country color coding</p>
+            </div>
+        </div>
+
+        <!-- Form Sections Container -->
+        <div class="form-sections-container">
+            
+            <!-- ─── Add Country Form ─────────────────────────────────────────── -->
+            <div id="addCountrySection" class="form-section active">
+                <div class="form-section-header">
+                    <h3>🌍 Add a New Country</h3>
+                    <p>Register a new country for ministry tracking</p>
+                </div>
+                <form id="formAddCountry">
+                    <div class="form-group">
+                        <label for="addCountryName">Country Name</label>
+                        <input type="text" id="addCountryName" required 
+                               placeholder="e.g. Germany" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="addCountryCode">Country Code (2-letters)</label>
+                        <input type="text" id="addCountryCode" required 
+                               placeholder="e.g. de" maxlength="2" 
+                               style="text-transform: lowercase;" autocomplete="off">
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        ✅ Add Country
+                    </button>
+                </form>
+            </div>
+            
+            <!-- ─── Add Church Form ──────────────────────────────────────────── -->
+            <div id="addChurchSection" class="form-section">
+                <div class="form-section-header">
+                    <h3>⛪ Add a New Church</h3>
+                    <p>Register a church location within a country</p>
+                </div>
+                <form id="formAddChurch">
+                    <div class="form-group">
+                        <label for="churchCountrySelect">Select Country</label>
+                        <select id="churchCountrySelect" required class="form-control">
+                            <option value="">-- Choose Country --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="addChurchState">State / Region Name</label>
+                        <input type="text" id="addChurchState" required 
+                               placeholder="e.g. Bavaria" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="addChurchName">Church Name</label>
+                        <input type="text" id="addChurchName" required 
+                               placeholder="e.g. Munich Fellowship" autocomplete="off">
+                    </div>
+                    
+                    <!-- Mini Map for Location Selection -->
+                    <div class="form-group">
+                        <label>📍 Click on the map to set the exact church location</label>
+                        <div id="addChurchMap" class="mini-map"></div>
+                        <input type="hidden" id="addChurchLat">
+                        <input type="hidden" id="addChurchLng">
+                        <p id="selectedCoordsText" class="coords-text">
+                            ⚠️ No location selected yet. Click the map!
+                        </p>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addChurchYear">Year Started</label>
+                            <input type="number" id="addChurchYear" 
+                                   placeholder="2024" min="1900" max="2100">
+                        </div>
+                        <div class="form-group">
+                            <label for="addChurchAttendees">Attendees</label>
+                            <input type="number" id="addChurchAttendees" 
+                                   placeholder="50" min="0">
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        ✅ Add Church
+                    </button>
+                </form>
+            </div>
+            
+            <!-- ─── Add Staff Form ───────────────────────────────────────────── -->
+            <div id="addStaffSection" class="form-section">
+                <div class="form-section-header">
+                    <h3>👔 Add Staff Member</h3>
+                    <p>Register a new staff member and track discipleship progress</p>
+                </div>
+                <form id="formAddStaff">
+                    <div class="form-group">
+                        <label for="staffChurchSelect">Assign to Church</label>
+                        <select id="staffChurchSelect" required class="form-control">
+                            <option value="">-- Choose Church --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="addStaffName">Staff Name</label>
+                        <input type="text" id="addStaffName" required 
+                               placeholder="e.g. John Doe" autocomplete="off">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addStaffAge">Age</label>
+                            <input type="number" id="addStaffAge" 
+                                   placeholder="30" min="18" max="120">
+                        </div>
+                        <div class="form-group">
+                            <label for="addStaffYear">Year Joined</label>
+                            <input type="number" id="addStaffYear" 
+                                   placeholder="2024" min="1900" max="2100">
+                        </div>
+                    </div>
+                    
+                    <!-- Discipleship Progress Tracker -->
+                    <div class="discipleship-tracker">
+                        <h4>📈 Discipleship Progress Tracker</h4>
+                        <p>Select the highest level achieved for each milestone</p>
+                        
+                        <div class="form-row discipleship-row">
+                            <div class="form-group">
+                                <label for="addStaffEvangelism">Evangelism</label>
+                                <select id="addStaffEvangelism" class="form-control">
+                                    <option value="None">None</option>
+                                    <option value="Model">Model</option>
+                                    <option value="Assist">Assist</option>
+                                    <option value="Watch">Watch</option>
+                                    <option value="Leader">Leader</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="addStaffSalvation">Salvation</label>
+                                <select id="addStaffSalvation" class="form-control">
+                                    <option value="None">None</option>
+                                    <option value="Model">Model</option>
+                                    <option value="Assist">Assist</option>
+                                    <option value="Watch">Watch</option>
+                                    <option value="Leader">Leader</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="addStaffBaptism">Baptism</label>
+                                <select id="addStaffBaptism" class="form-control">
+                                    <option value="None">None</option>
+                                    <option value="Model">Model</option>
+                                    <option value="Assist">Assist</option>
+                                    <option value="Watch">Watch</option>
+                                    <option value="Leader">Leader</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        ✅ Add Staff
+                    </button>
+                </form>
+            </div>
+            
+            <!-- ─── Update Status Form ───────────────────────────────────────── -->
+            <div id="updateLevelSection" class="form-section">
+                <div class="form-section-header">
+                    <h3>🎨 Update Country Status</h3>
+                    <p>Change the color coding for a country on the map</p>
+                </div>
+                <form id="formUpdateLevel">
+                    <div class="form-group">
+                        <label for="updateLevelCountrySelect">Select Country</label>
+                        <select id="updateLevelCountrySelect" required class="form-control">
+                            <option value="">-- Choose Country --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateLevelSelect">New Status / Level</label>
+                        <select id="updateLevelSelect" required class="form-control">
+                            <option value="L1">L1 - Established (Green)</option>
+                            <option value="L2">L2 - Growing (Light Green)</option>
+                            <option value="L3">L3 - Developing (Yellow)</option>
+                            <option value="L4">L4 - Emerging (Orange)</option>
+                            <option value="inactive">Inactive (Grey)</option>
+                            <option value="cancelled">Cancelled (Red)</option>
+                            <option value="default">Default (Theme Orange)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Status Preview -->
+                    <div class="status-preview">
+                        <span class="preview-label">Preview:</span>
+                        <span id="statusPreviewColor" class="preview-color" style="background: #4caf50"></span>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        ✅ Update Map Color
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SIDEBAR
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="sidebar" class="sidebar">
+        <button id="closeSidebar" class="sidebar-close" title="Close" aria-label="Close sidebar">
+            &times;
+        </button>
+        <div id="sidebarContent"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LOADING OVERLAY
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading map data...</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TOAST NOTIFICATIONS
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SCRIPTS
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin="anonymous"></script>
+    
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+    
+    <!-- Inline Script for Loading State -->
+    <script>
+        // Hide loading overlay when map is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Give the map time to initialize
+            setTimeout(function() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                    setTimeout(() => overlay.remove(), 500);
+                }
+            }, 1500);
+        });
+        
+        // Status preview color update
+        const levelSelect = document.getElementById('updateLevelSelect');
+        const previewColor = document.getElementById('statusPreviewColor');
+        const levelColors = {
+            'L1': '#4caf50',
+            'L2': '#8bc34a',
+            'L3': '#ffeb3b',
+            'L4': '#ff9800',
+            'inactive': '#9e9e9e',
+            'cancelled': '#f44336',
+            'default': '#db5729'
+        };
+        
+        if (levelSelect && previewColor) {
+            levelSelect.addEventListener('change', function() {
+                previewColor.style.background = levelColors[this.value] || '#db5729';
+            });
+        }
+    </script>
+</body>
+</html>
