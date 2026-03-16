@@ -114,6 +114,43 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ══════════════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+    /* Reverse the core color pallete */
+    --white: #121212;
+    --gray-50: #1e1e1e;
+    --gray-100: #242424;
+    --gray-200: #2c2c2c;
+    --gray-300: #383838;
+    --gray-400: #555555;
+    --gray-500: #888888;
+    --gray-600: #aaaaaa;
+    --gray-700: #cccccc;
+    --gray-800: #e0e0e0;
+    --gray-900: #f5f5f5;
+    --black: #ffffff;
+    
+    /* Adjust Glass/Shadow opacity for dark context */
+    --glass-bg: rgba(30, 30, 30, 0.85);
+    --glass-bg-dark: rgba(18, 18, 18, 0.95);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4), 0 5px 10px rgba(0, 0, 0, 0.2);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* Smooth transition when dark mode applies to major elements */
+body, .container, .sidebar, .modal-content, .map-legend, .branding, 
+.form-sections-container, .forms-page, .form-card, .stat-cell, .staff-card, .toggle-btn {
+    transition: background-color var(--transition-normal), color var(--transition-normal), border-color var(--transition-normal);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
    RESET & BASE STYLES
    ══════════════════════════════════════════════════════════════════════════════ */
 *, *::before, *::after {
@@ -186,6 +223,10 @@ body {
     background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
 }
 
+[data-theme="dark"] .leaflet-container {
+    background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%);
+}
+
 /* ─── Leaflet Controls ─────────────────────────────────────────────────────── */
 .leaflet-control-attribution {
     background: var(--glass-bg) !important;
@@ -237,10 +278,13 @@ body {
     border-radius: var(--radius-sm);
     padding: 2px 8px;
     font-size: 0.75em;
+    color: var(--gray-800);
 }
 
 /* ─── Leaflet Popups ───────────────────────────────────────────────────────── */
 .leaflet-popup-content-wrapper {
+    background: var(--white);
+    color: var(--gray-800);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
 }
@@ -252,6 +296,7 @@ body {
 }
 
 .leaflet-popup-tip {
+    background: var(--white);
     box-shadow: var(--shadow-sm);
 }
 
@@ -386,6 +431,26 @@ body {
 
 .data-btn:hover {
     background: linear-gradient(135deg, var(--secondary-light) 0%, var(--secondary) 100%);
+}
+
+/* ─── Theme Button ─────────────────────────────────────────────────────────── */
+.theme-btn {
+    top: 200px;
+    background: linear-gradient(135deg, #424242 0%, #212121 100%);
+    color: #ffffff;
+}
+
+.theme-btn:hover {
+    background: linear-gradient(135deg, #616161 0%, #424242 100%);
+}
+
+[data-theme="dark"] .theme-btn {
+    background: linear-gradient(135deg, #fff9c4 0%, #fbc02d 100%);
+    color: #212121;
+}
+
+[data-theme="dark"] .theme-btn:hover {
+    background: linear-gradient(135deg, #fff59d 0%, #f9a825 100%);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -823,11 +888,19 @@ body {
     border-radius: var(--radius-sm);
     font-size: 0.72em;
     font-weight: 600;
-    color: var(--white);
+    color: var(--white); /* Stays white dynamically */
     display: inline-flex;
     align-items: center;
     gap: 4px;
     transition: transform var(--transition-fast);
+}
+
+/* Enforce true white on specific elements that don't need dark mode shifting */
+[data-theme="dark"] .dm-badge,
+[data-theme="dark"] .submit-btn,
+[data-theme="dark"] .action-btn,
+[data-theme="dark"] .overview-btn {
+    color: #ffffff;
 }
 
 .dm-badge:hover {
@@ -919,6 +992,12 @@ body {
     margin: 14px 0;
 }
 
+[data-theme="dark"] .obscure-notice {
+    background: linear-gradient(135deg, #4d3800 0%, #332500 100%);
+    border-color: #6d4c00;
+    color: #ffecb3;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    MODAL
    ══════════════════════════════════════════════════════════════════════════════ */
@@ -972,7 +1051,7 @@ body {
     align-items: center;
     padding: 22px 28px;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: var(--white);
+    color: #ffffff;
 }
 
 .modal-header h2 {
@@ -991,7 +1070,7 @@ body {
     border: none;
     border-radius: var(--radius-full);
     font-size: 1.5em;
-    color: var(--white);
+    color: #ffffff;
     cursor: pointer;
     transition: all var(--transition-fast);
 }
@@ -1115,7 +1194,7 @@ body {
     flex: 1;
     padding: 12px 20px;
     background: var(--secondary);
-    color: var(--white);
+    color: #ffffff;
     border: none;
     border-radius: var(--radius-md);
     font-size: 0.9em;
@@ -1307,6 +1386,7 @@ body {
     font-family: var(--font-primary);
     transition: all var(--transition-fast);
     background: var(--white);
+    color: var(--gray-900);
 }
 
 .form-group input:hover,
@@ -1400,7 +1480,7 @@ body {
     width: 100%;
     padding: 16px 28px;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: var(--white);
+    color: #ffffff;
     border: none;
     border-radius: var(--radius-md);
     font-size: 1em;
@@ -1610,6 +1690,7 @@ body {
     .overview-btn { top: 12px; }
     .security-wrap { top: 62px; left: 12px; }
     .data-btn { top: 112px; }
+    .theme-btn { top: 162px; }
     
     .form-selection-cards {
         grid-template-columns: repeat(2, 1fr);
@@ -1770,18 +1851,3 @@ body {
         border: 2px solid currentColor;
     }
 }
-
-/* Dark mode support (optional - uncomment if needed) */
-/*
-@media (prefers-color-scheme: dark) {
-    :root {
-        --white: #1a1a1a;
-        --gray-50: #2a2a2a;
-        --gray-100: #333333;
-        --gray-200: #444444;
-        --gray-300: #555555;
-        --gray-800: #e0e0e0;
-        --gray-900: #f0f0f0;
-    }
-}
-*/

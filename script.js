@@ -373,7 +373,7 @@ function getChurchLocationData(churchName) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// MAP INITIALIZATION
+// MAP INITIALIZATION & THEME LOGIC
 // ══════════════════════════════════════════════════════════════════════════════
 
 const map = L.map('map', {
@@ -387,12 +387,18 @@ const map = L.map('map', {
 
 map.setMaxBounds(CONFIG.map.maxBounds);
 
-// Add tile layer with custom styling
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// Define Base Tile Layers
+const lightTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors',
     noWrap: true
-}).addTo(map);
+});
+
+const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap, © CartoDB',
+    noWrap: true
+});
 
 // Add scale control
 L.control.scale({ position: 'bottomleft' }).addTo(map);
@@ -402,6 +408,61 @@ const churchMarkers = L.layerGroup().addTo(map);
 const stateMarkers = L.layerGroup().addTo(map);
 const countryMarkers = L.layerGroup().addTo(map);
 const stateShapeMarkers = L.layerGroup().addTo(map);
+
+// ─── THEME HANDLING ──────────────────────────────────────────────────────────
+
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+function applyTheme(mode) {
+    document.documentElement.setAttribute('data-theme', mode);
+    localStorage.setItem('theme', mode);
+
+    if (themeToggleBtn) {
+        const icon = themeToggleBtn.querySelector('.btn-icon');
+        const text = themeToggleBtn.querySelector('.btn-text');
+
+        if (mode === 'dark') {
+            icon.textContent = '☀️';
+            text.textContent = 'Light Mode';
+        } else {
+            icon.textContent = '🌙';
+            text.textContent = 'Dark Mode';
+        }
+    }
+
+    if (mode === 'dark') {
+        if (map.hasLayer(lightTiles)) map.removeLayer(lightTiles);
+        darkTiles.addTo(map);
+    } else {
+        if (map.hasLayer(darkTiles)) map.removeLayer(darkTiles);
+        lightTiles.addTo(map);
+    }
+    
+    // Switch the mini-map tiles if it has been instantiated
+    if (typeof addChurchMapInstance !== 'undefined' && addChurchMapInstance) {
+        addChurchMapInstance.eachLayer(layer => {
+            if (layer instanceof L.TileLayer) addChurchMapInstance.removeLayer(layer);
+        });
+        if (mode === 'dark') {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }).addTo(addChurchMapInstance);
+        } else {
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(addChurchMapInstance);
+        }
+    }
+}
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+}
+
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const current = document.documentElement.getAttribute('data-theme');
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SECURITY MODE
@@ -593,7 +654,7 @@ function buildCountrySidebar(country) {
         </div>`;
 
     if (states && Object.keys(states).length > 0) {
-        html += `<hr><h3 style="margin-top:15px; margin-bottom:10px; font-size: 1.05em; color: #444;">📍 Regional Breakdown</h3><ul class="state-list">`;
+        html += `<hr><h3 style="margin-top:15px; margin-bottom:10px; font-size: 1.05em; color: var(--gray-800);">📍 Regional Breakdown</h3><ul class="state-list">`;
         for (const [name, data] of Object.entries(states)) {
             html += `<li style="margin-bottom: 15px;"><strong>${escapeHtml(name)}</strong><span style="display:block; margin-bottom:8px;">${data.churches} churches · ${data.groups} groups · ${data.staff} staff</span>`;
             data.names.forEach((cName, idx) => {
@@ -604,7 +665,7 @@ function buildCountrySidebar(country) {
         }
         html += `</ul>`;
     } else {
-        html += `<hr><h3 style="margin-top:15px; margin-bottom:10px; font-size: 1.05em; color: #444;">⛪ Churches</h3>`;
+        html += `<hr><h3 style="margin-top:15px; margin-bottom:10px; font-size: 1.05em; color: var(--gray-800);">⛪ Churches</h3>`;
         country.churches.forEach((ch, idx) => {
             html += generateChurchDetailsHTML(ch.name, `country-direct-${idx}`, false, true);
         });
@@ -625,7 +686,7 @@ function buildStateSidebar(stateName, stateData) {
           <div class="stat-cell"><span class="stat-num">${stateData.groups}</span><span class="stat-lbl">Groups</span></div>
           <div class="stat-cell"><span class="stat-num">${stateData.staff}</span><span class="stat-lbl">Staff</span></div>
         </div>`;
-        html += `<hr><h3 style="margin-top:15px; margin-bottom:10px; font-size: 1.05em; color: #444;">⛪ Churches in ${escapeHtml(stateName)}</h3>`;
+        html += `<hr><h3 style="margin-top:15px; margin-bottom:10px; font-size: 1.05em; color: var(--gray-800);">⛪ Churches in ${escapeHtml(stateName)}</h3>`;
         stateData.names.forEach((cName, idx) => {
             html += generateChurchDetailsHTML(cName, `state-${idx}`, false, true);
         });
@@ -915,6 +976,8 @@ securityOpts.forEach(opt => {
 const formsPage = document.getElementById('formsPage');
 const formCards = document.querySelectorAll('.form-card');
 const formSections = document.querySelectorAll('.form-section');
+
+// CRITICAL FIX: Initialize variables here BEFORE theme function touches them
 let addChurchMapInstance = null;
 let addChurchMarker = null;
 
@@ -955,7 +1018,14 @@ function populateFormDropdowns() {
 function initAddChurchMap() {
     if (!addChurchMapInstance) {
         addChurchMapInstance = L.map('addChurchMap', { minZoom: 1, maxZoom: 16, zoom: 2 }).setView([20, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(addChurchMapInstance);
+        
+        // Add tile layer based on current theme
+        const currentMode = document.documentElement.getAttribute('data-theme');
+        if (currentMode === 'dark') {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }).addTo(addChurchMapInstance);
+        } else {
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(addChurchMapInstance);
+        }
         
         addChurchMapInstance.on('click', function(e) {
             const lat = e.latlng.lat;
@@ -1333,6 +1403,9 @@ initializeDiscipleshipData();
 
 // Render initial dashboard
 renderGlobalDashboard();
+
+// CRITICAL FIX: Run theme initialization safely AFTER all variables are fully declared
+initTheme();
 
 console.log('🌍 DOOR International Global Ministry Map v2.0 initialized');
 console.log('📊 Loaded', countries.length, 'countries with', Object.keys(placeholderData.churchDetails).length, 'churches');
